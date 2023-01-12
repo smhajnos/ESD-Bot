@@ -25,6 +25,7 @@ esd_color = 0xffe100
 esd_channel = 1062371995989311489 #general
 #esd_channel = logs_channel
 staff_channel = logs_channel
+phil_channel = esd_channel
 
 
 intents = nextcord.Intents.all()
@@ -53,8 +54,9 @@ async def log(s):
     
 
 @tasks.loop(seconds=60)
-async def esdevent():
+async def timedevents():
     await esdcheck()
+    await philcheck()
     
 def esdrisk(query):
     gl = Nominatim(user_agent="ESDBot")
@@ -89,6 +91,30 @@ async def esdcheck(forced=False):
             esdfile.write(str(esddays))
             
 
+async def philcheck():
+    philday = datetime.datetime(2023,1,9,9,0,0,0)
+    today = datetime.datetime.now()
+    delta = today - philday
+    phildays = delta.days
+    print("Days since Phil left: {}".format(phildays))
+    if phildays < 0 :
+        s = "Phil leaves in {} days.".format(-phildays)
+    elif phildays == 0:
+        s = "Phil leaves today!"
+    else:
+        s = "Phil left {} days ago".format(phildays)
+    
+    with open("lastphilcheck.txt","r") as philfile:
+        try:
+            lastphildays = int(philfile.read())
+        except:
+            lastphildays = -99999
+    if lastphildays < phildays:
+        chan = bot.get_channel(phil_channel)
+        await chan.send(s)
+        with open("lastphilcheck.txt","w") as philfile:
+            philfile.write(str(phildays))
+            
 
 
 @bot.event
@@ -98,8 +124,8 @@ async def on_ready():
     await main_channel.send("Starting")
     
     #start timers
-    if not esdevent.is_running():
-        esdevent.start()
+    if not timedevents.is_running():
+        timedevents.start()
         
 
 
